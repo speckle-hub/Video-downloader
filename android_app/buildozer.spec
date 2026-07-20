@@ -16,22 +16,24 @@ fullscreen = 0
 # Android specific
 android.api = 34
 android.minapi = 21
-android.sdk = 34
-android.ndk = 27
-android.gradle_dependencies = 
-android.add_src = 
+android.sdk_version = 34
+android.ndk_version = 27
+android.build_tools = 34.0.0
+android.gradle_dependencies =
+android.add_src =
 android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, FOREGROUND_SERVICE
-android.arch = arm64-v8a
+android.archs = arm64-v8a
 android.allow_backup = 1
 android.window_soft_input_mode = adjustResize
+android.ndk = 27
+android.accept_sdk_license = True
 
 # Python-for-android
 p4a.branch = develop
-p4a.local_recipes = 
-p4a.hooks = 
+p4a.local_recipes =
+p4a.hooks =
 
 [buildozer]
 
 log_level = 2
 warn_on_root = 1
-arch = arm64-v8a
