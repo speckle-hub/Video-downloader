@@ -11,23 +11,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: kivy/buildozer:latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq python3-pip python3-dev build-essential git zip unzip openjdk-17-jdk autoconf libtool pkg-config ccache
-
-      - name: Install Buildozer
-        run: pip install buildozer cython
 
       - name: Build APK
         run: |
@@ -40,13 +29,6 @@ jobs:
           name: VideoDownloader-APK
           path: android_app/bin/*.apk
           if-no-files-found: error
-
-      - name: Get APK name
-        id: apk
-        run: |
-          APK_PATH=$(ls android_app/bin/*.apk | head -1)
-          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
-          echo "apk_name=$(basename $APK_PATH)" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
