@@ -24,10 +24,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq python3-pip python3-dev build-essential git zip unzip openjdk-17-jdk libncurses5:i386 libstdc++6:i386 zlib1g:i386 autoconf libtool pkg-config
-          sudo dpkg --add-architecture i386
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libncurses5:i386 libstdc++6:i386 zlib1g:i386
+          sudo apt-get install -y -qq python3-pip python3-dev build-essential git zip unzip openjdk-17-jdk autoconf libtool pkg-config ccache
 
       - name: Install Buildozer
         run: pip install buildozer cython
