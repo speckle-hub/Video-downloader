@@ -43,10 +43,17 @@ jobs:
 
       - name: Find and upload APK
         run: |
-          echo "Searching for APK..."
-          find android_app -name "*.apk" -type f 2>/dev/null || echo "No APK found"
-          find android_app -name "*.apk" -type f -exec cp {} android_app/ \; 2>/dev/null || true
-          ls -la android_app/*.apk 2>/dev/null || echo "No APK in android_app/"
+          echo "=== Searching for APK ==="
+          find android_app -name "*.apk" -type f 2>/dev/null
+          APK=$(find android_app -name "*.apk" -type f 2>/dev/null | head -1)
+          if [ -n "$APK" ]; then
+            echo "Found APK at: $APK"
+            cp "$APK" android_app/
+            ls -la android_app/*.apk
+          else
+            echo "No APK found. Checking last 50 lines of log..."
+            tail -50 android_app/buildozer_full.log 2>/dev/null || echo "No log available"
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -57,6 +64,12 @@ jobs:
             android_app/bin/*.apk
             android_app/.buildozer/android/platform/**/*.apk
           if-no-files-found: warn
+
+      - name: Show last part of log
+        if: always()
+        run: |
+          echo "=== Build log (last 80 lines) ==="
+          tail -80 android_app/buildozer_full.log 2>/dev/null || echo "No log available"
 
       - name: Upload full build log
         if: always()
