@@ -27,8 +27,6 @@ android.allow_backup = 1
 android.window_soft_input_mode = adjustResize
 android.ndk = 27
 android.accept_sdk_license = True
-android.sdk_path = /usr/local/lib/android/sdk
-android.ndk_path = /usr/local/lib/android/sdk/ndk/27.3.13750724
 
 # Python-for-android
 p4a.branch = develop
