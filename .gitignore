@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+*.spec
+!android_app/buildozer.spec
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Buildozer
+android_app/.buildozer/
+android_app/bin/
+android_app/buildozer.log
+
+# Temp test files
+test_*.py
+
+# Build artifacts
+*.zip

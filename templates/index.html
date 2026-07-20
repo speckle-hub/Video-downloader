@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Downloader</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Video Downloader</h1>
+            <p>Download videos &amp; photos from any site</p>
+        </header>
+
+        <div class="card">
+            <div class="form-group">
+                <label for="url">Enter URL</label>
+                <input type="url" id="url" placeholder="https://youtube.com/watch?v=..." autofocus>
+            </div>
+
+            <button id="fetch-btn" class="btn btn-secondary" onclick="fetchInfo()">Fetch Info</button>
+
+            <div id="info-box" class="info-box" style="display:none;">
+                <h3 id="info-title">Media Info</h3>
+                <pre id="info-content"></pre>
+            </div>
+
+            <div id="format-section" style="display:none;">
+                <h3 style="margin:16px 0 8px;font-size:0.95rem;color:#b0b0c0;">Available Formats</h3>
+                <div class="format-table-wrap">
+                    <table id="format-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Resolution</th>
+                                <th>Video</th>
+                                <th>Audio</th>
+                                <th>Size</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody id="format-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="action-buttons" style="display:none;margin-top:16px;">
+                <button id="dl-selected-btn" class="btn btn-primary" onclick="downloadSelected()" disabled>
+                    Download Selected Format
+                </button>
+
+                <div class="quick-buttons">
+                    <button class="btn btn-small" onclick="quickDownload('best')">Best Video</button>
+                    <button class="btn btn-small" onclick="quickDownload('mp4')">Best MP4</button>
+                    <button class="btn btn-small" onclick="quickDownload('audio')">MP3 Audio</button>
+                    <button class="btn btn-small" onclick="quickDownload('photo')">Photo</button>
+                </div>
+            </div>
+
+            <div id="progress-area" style="display:none;">
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <p id="status-text" class="status-text">Initializing...</p>
+            </div>
+        </div>
+
+        <footer>
+            <p>Powered by yt-dlp &mdash; Supports 1000+ sites</p>
+        </footer>
+    </div>
+
+    <script>
+        let currentUrl = '';
+        let currentFormats = [];
+
+        document.getElementById('url').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') fetchInfo();
+        });
+
+        function fetchInfo() {
+            const url = document.getElementById('url').value.trim();
+            if (!url) { alert('Please enter a URL'); return; }
+
+            const btn = document.getElementById('fetch-btn');
+            btn.disabled = true;
+            btn.textContent = 'Fetching...';
+
+            document.getElementById('info-box').style.display = 'none';
+            document.getElementById('format-section').style.display = 'none';
+            document.getElementById('action-buttons').style.display = 'none';
+            document.getElementById('progress-area').style.display = 'none';
+
+            fetch('/api/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('info-content').textContent = 'Error: ' + data.error;
+                    document.getElementById('info-box').style.display = 'block';
+                    return;
+                }
+
+                currentUrl = url;
+                currentFormats = data.formats || [];
+
+                let txt = 'Title: ' + (data.title || 'Unknown') + '\n';
+                txt += 'Uploader: ' + (data.uploader || 'Unknown') + '\n';
+                txt += 'Duration: ' + (data.duration_str || 'N/A') + '\n';
+                txt += 'Formats: ' + (data.format_count || 0) + ' available';
+                document.getElementById('info-content').textContent = txt;
+                document.getElementById('info-box').style.display = 'block';
+
+                renderFormats(currentFormats);
+                document.getElementById('format-section').style.display = 'block';
+                document.getElementById('action-buttons').style.display = 'block';
+                document.getElementById('dl-selected-btn').disabled = true;
+            })
+            .catch(err => {
+                document.getElementById('info-content').textContent = 'Error: ' + err;
+                document.getElementById('info-box').style.display = 'block';
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = 'Fetch Info';
+            });
+        }
+
+        function renderFormats(formats) {
+            const tbody = document.getElementById('format-body');
+            tbody.innerHTML = '';
+
+            formats.forEach((f, idx) => {
+                const tr = document.createElement('tr');
+                tr.dataset.index = idx;
+                tr.addEventListener('click', () => {
+                    document.querySelectorAll('#format-body tr').forEach(r => r.classList.remove('selected'));
+                    tr.classList.add('selected');
+                    document.getElementById('dl-selected-btn').disabled = false;
+                    document.getElementById('dl-selected-btn').textContent =
+                        'Download: ' + f.id + ' (' + f.resolution + ')';
+                });
+
+                const sizeStr = f.filesize
+                    ? (f.filesize > 1024 * 1024
+                        ? (f.filesize / 1024 / 1024).toFixed(0) + ' MB'
+                        : (f.filesize / 1024).toFixed(0) + ' KB')
+                    : '';
+
+                tr.innerHTML =
+                    '<td>' + f.id + '</td>' +
+                    '<td>' + f.resolution + '</td>' +
+                    '<td>' + f.vcodec + '</td>' +
+                    '<td>' + f.acodec + '</td>' +
+                    '<td>' + sizeStr + '</td>' +
+                    '<td>' + f.note + '</td>';
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function getSelectedFormatId() {
+            const selected = document.querySelector('#format-body tr.selected');
+            if (!selected) return null;
+            const idx = parseInt(selected.dataset.index);
+            return currentFormats[idx] ? currentFormats[idx].id : null;
+        }
+
+        function downloadSelected() {
+            const fid = getSelectedFormatId();
+            if (!fid) { alert('Please select a format first.'); return; }
+            startDownload('format', fid);
+        }
+
+        function quickDownload(mode) {
+            startDownload(mode, null);
+        }
+
+        function startDownload(mode, formatId) {
+            if (!currentUrl) return;
+
+            document.getElementById('action-buttons').style.display = 'none';
+            document.getElementById('progress-area').style.display = 'block';
+            document.getElementById('progress-fill').style.width = '0%';
+            document.getElementById('status-text').textContent = 'Starting download...';
+
+            const body = { url: currentUrl, mode: mode };
+            if (formatId) body.format_id = formatId;
+
+            fetch('/api/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('status-text').textContent = 'Error: ' + data.error;
+                    document.getElementById('action-buttons').style.display = 'block';
+                    return;
+                }
+                pollProgress(data.task_id);
+            })
+            .catch(err => {
+                document.getElementById('status-text').textContent = 'Error: ' + err;
+                document.getElementById('action-buttons').style.display = 'block';
+            });
+        }
+
+        function pollProgress(taskId) {
+            const interval = setInterval(() => {
+                fetch('/api/progress/' + taskId)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'downloading') {
+                        document.getElementById('progress-fill').style.width = data.percent + '%';
+                        document.getElementById('status-text').textContent =
+                            data.percent + '% - ' + (data.speed || '');
+                    } else if (data.status === 'complete') {
+                        document.getElementById('progress-fill').style.width = '100%';
+                        document.getElementById('status-text').textContent = 'Download complete!';
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            document.getElementById('action-buttons').style.display = 'block';
+                            document.getElementById('progress-area').style.display = 'none';
+                        }, 2000);
+                    } else if (data.status === 'error') {
+                        document.getElementById('status-text').textContent = 'Error: ' + data.message;
+                        clearInterval(interval);
+                        document.getElementById('action-buttons').style.display = 'block';
+                    } else if (data.status === 'processing') {
+                        document.getElementById('status-text').textContent = 'Processing...';
+                    }
+                })
+                .catch(() => {});
+            }, 500);
+        }
+    </script>
+</body>
+</html>
