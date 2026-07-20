@@ -41,12 +41,22 @@ jobs:
           ANDROID_NDK_ROOT: /usr/local/lib/android/sdk/ndk/27.3.13750724
           JAVA_HOME: /usr/lib/jvm/temurin-17-jdk-amd64
 
+      - name: Find and upload APK
+        run: |
+          echo "Searching for APK..."
+          find android_app -name "*.apk" -type f 2>/dev/null || echo "No APK found"
+          find android_app -name "*.apk" -type f -exec cp {} android_app/ \; 2>/dev/null || true
+          ls -la android_app/*.apk 2>/dev/null || echo "No APK in android_app/"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: VideoDownloader-APK
-          path: android_app/bin/*.apk
-          if-no-files-found: error
+          path: |
+            android_app/*.apk
+            android_app/bin/*.apk
+            android_app/.buildozer/android/platform/**/*.apk
+          if-no-files-found: warn
 
       - name: Upload full build log
         if: always()
