@@ -17,7 +17,7 @@ fullscreen = 0
 android.api = 34
 android.minapi = 21
 android.sdk_version = 34
-android.ndk_version = 27
+android.ndk_version = 28
 android.build_tools = 34.0.0
 android.gradle_dependencies =
 android.add_src =
@@ -25,7 +25,7 @@ android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, F
 android.archs = arm64-v8a
 android.allow_backup = 1
 android.window_soft_input_mode = adjustResize
-android.ndk = 27
+android.ndk = 28
 android.accept_sdk_license = True
 
 # Python-for-android

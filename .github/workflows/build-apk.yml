@@ -28,13 +28,13 @@ jobs:
 
       - name: Cache Buildozer SDK/NDK
         id: cache-buildozer
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: android_app/.buildozer
           key: buildozer-${{ runner.os }}-${{ hashFiles('android_app/buildozer.spec') }}
 
       - name: Install compatible CMake
-        run: pip install 'cmake<3.31'
+        run: pip install "cmake<3.31"
 
       - name: Install Buildozer
         run: pip install buildozer cython
@@ -42,8 +42,7 @@ jobs:
       - name: Build APK
         run: |
           cd android_app
-          # Let Buildozer download its own SDK (GitHub's pre-installed one is incomplete)
-          unset ANDROID_HOME ANDROID_SDK_ROOT ANDROID_NDK_HOME ANDROID_NDK_ROOT ANDROID_NDK ANDROID_SDK_HOME
+          # Use system SDK (pre-installed) - NDK 29 is compatible with CMake 3.31
           buildozer android debug 2>&1 | tee buildozer_full.log
         env:
           JAVA_HOME: /usr/lib/jvm/temurin-17-jdk-amd64
