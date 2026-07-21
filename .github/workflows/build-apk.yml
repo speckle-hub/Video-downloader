@@ -33,6 +33,9 @@ jobs:
           path: android_app/.buildozer
           key: buildozer-${{ runner.os }}-${{ hashFiles('android_app/buildozer.spec') }}
 
+      - name: Install compatible CMake
+        run: pip install 'cmake<3.31'
+
       - name: Install Buildozer
         run: pip install buildozer cython
 
